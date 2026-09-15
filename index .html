@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>让人心更温暖 · 让世界更美好</title>
+    <style>
+        /* ===== 全局变量 ===== */
+        :root {
+            --primary: #e67e22;
+            --primary-light: #f39c12;
+            --glass-bg: rgba(255, 255, 255, 0.55);
+            --glass-border: rgba(255, 255, 255, 0.35);
+            --shadow: 0 12px 40px rgba(0, 0, 0, 0.10);
+            --radius: 18px;
+            --text: #2c3e50;
+            --text-light: #4a5a6a;
+            --success: #27ae60;
+            --danger: #e74c3c;
+            --gold: #f1c40f;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            font-family: 'Segoe UI', 'PingFang SC', Roboto, 'Helvetica Neue', sans-serif;
+            color: var(--text);
+        }
+
+        /* ===== 背景墙（纯CSS生成，无外部依赖） ===== */
+        .bg-wall {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            overflow: hidden;
+        }
+        .bg-wall .cell {
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3.5rem;
+            color: rgba(255,255,255,0.25);
+            filter: brightness(0.88) saturate(0.9);
+            transition: filter 0.5s ease;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .bg-wall .cell:hover {
+            filter: brightness(1.0) saturate(1.0);
+        }
+
+        /* ===== 极浅遮罩 ===== */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            background: rgba(0, 0, 0, 0.04);
+            pointer-events: none;
+        }
+
+        /* ===== 主容器 ===== */
+        .container {
+            position: relative;
+            z-index: 2;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 24px 20px 60px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ===== 毛玻璃卡片 ===== */
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+
+        /* ===== 头部 ===== */
+        .header {
+            text-align: center;
+            padding: 28px 24px 20px;
+            margin-bottom: 24px;
+        }
+        .header h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: 2px;
+            line-height: 1.4;
+            text-shadow: 0 2px 12px rgba(255, 255, 255, 0.6);
+        }
+        .header .subtitle {
+            font-size: 1.05rem;
+            color: var(--text-light);
+            margin-top: 6px;
+            font-weight: 500;
+            text-shadow: 0 1px 4px rgba(255,255,255,0.5);
+        }
+        .header .stats {
+            display: flex;
+            justify-content: center;
+            gap: 28px;
+            margin-top: 18px;
+            flex-wrap: wrap;
+        }
+        .header .stats span {
+            font-size: 0.95rem;
+            color: var(--text);
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(8px);
+            padding: 6px 20px;
+            border-radius: 30px;
+            font-weight: 500;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .header .stats span strong {
+            color: var(--primary);
+            font-size: 1.2rem;
+        }
+
+        /* ===== Tab 导航 ===== */
+        .tabs {
+            display: flex;
+            gap: 0;
+            overflow: hidden;
+            margin-top: 8px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius) var(--radius) 0 0;
+            box-shadow: var(--shadow);
+        }
+        .tabs button {
+            flex: 1;
+            padding: 14px 10px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            background: transparent;
+            color: var(--text-light);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        .tabs button::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 10%;
+            width: 80%;
+            height: 3px;
+            background: var(--primary);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+        .tabs button.active {
+            color: var(--primary);
+            background: rgba(230, 126, 34, 0.08);
+        }
+        .tabs button.active::after {
+            transform: scaleX(1);
+        }
+        .tabs button:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        /* ===== Tab 内容区 ===== */
+        .tab-content {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 0 0 var(--radius) var(--radius);
+            box-shadow: var(--shadow);
+            padding: 28px 24px 32px;
+            min-height: 460px;
+            flex: 1;
+        }
+        .tab-pane {
+            display: none;
+            animation: fadeUp 0.4s ease;
+        }
+        .tab-pane.active {
+            display: block;
+        }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(18px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ===== 表单样式 ===== */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px 22px;
+        }
+        .form-grid .full-width {
+            grid-column: 1 / -1;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .form-group label {
+            font-weight: 600;
+            font-size: 0.92rem;
+            margin-bottom: 5px;
+            color: var(--text);
+            text-shadow: 0 1px 4px rgba(255, 255, 255, 0.5);
+        }
+        .form-group label .hint {
+            font-weight: 400;
+            color: var(--text-light);
+            font-size: 0.82rem;
+        }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            padding: 10px 14px;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: border-color 0.25s, box-shadow 0.25s;
+            background: rgba(255, 255, 255, 0.45);
+            backdrop-filter: blur(6px);
+            outline: none;
+        }
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(230, 126, 34, 0.20);
+            background: rgba(255, 255, 255, 0.70);
+        }
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        .form-group .char-count {
+            text-align: right;
+            font-size: 0.8rem;
+            color: var(--text-light);
+            margin-top: 4px;
+        }
+        .form-group .privacy-tip {
+            background: rgba(254, 249, 231, 0.50);
+            backdrop-filter: blur(6px);
+            border-left: 4px solid var(--gold);
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            color: #5a4a08;
+            margin-top: 6px;
+        }
+
+        /* 对象单选组 */
+        .radio-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 4px;
+        }
+        .radio-group label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            padding: 6px 16px;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: rgba(255, 255, 255, 0.20);
+            backdrop-filter: blur(4px);
+        }
+        .radio-group label:hover {
+            border-color: var(--primary-light);
+            background: rgba(255, 255, 255, 0.40);
+        }
+        .radio-group input[type="radio"] {
+            accent-color: var(--primary);
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+        .radio-group label:has(input:checked) {
+            border-color: var(--primary);
+            background: rgba(230, 126, 34, 0.15);
+        }
+
+        .btn-submit {
+            grid-column: 1 / -1;
+            padding: 14px 28px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: #fff;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 16px rgba(230, 126, 34, 0.35);
+            letter-spacing: 1px;
+            margin-top: 6px;
+        }
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(230, 126, 34, 0.45);
+        }
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+
+        .form-message {
+            grid-column: 1 / -1;
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-weight: 500;
+            display: none;
+            backdrop-filter: blur(6px);
+        }
+        .form-message.success {
+            display: block;
+            background: rgba(234, 250, 241, 0.70);
+            color: #1e8449;
+            border-left: 4px solid var(--success);
+        }
+        .form-message.error {
+            display: block;
+            background: rgba(253, 237, 236, 0.70);
+            color: #922b21;
+            border-left: 4px solid var(--danger);
+        }
+
+        /* ===== 好事墙 ===== */
+        .wall-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .wall-toolbar .filter-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .wall-toolbar select {
+            padding: 6px 14px;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            background: rgba(255, 255, 255, 0.35);
+            backdrop-filter: blur(6px);
+            outline: none;
+            cursor: pointer;
+        }
+        .wall-toolbar select:focus {
+            border-color: var(--primary);
+        }
+        .wall-toolbar .empty-hint {
+            color: var(--text-light);
+            font-size: 0.9rem;
+            text-shadow: 0 1px 4px rgba(255, 255, 255, 0.4);
+        }
+
+        .wall-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* 好事卡片 */
+        .good-card {
+            background: rgba(255, 255, 255, 0.40);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 14px;
+            padding: 18px 20px 16px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+            border-left: 5px solid var(--primary-light);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+        }
+        .good-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        }
+        .good-card .card-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px 20px;
+            font-size: 0.85rem;
+            color: var(--text-light);
+            margin-bottom: 8px;
+        }
+        .good-card .card-meta span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .good-card .card-content {
+            font-size: 1.02rem;
+            line-height: 1.65;
+            color: var(--text);
+            padding: 4px 0 8px;
+        }
+        .good-card .card-actions {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            padding-top: 10px;
+            margin-top: 4px;
+        }
+        .good-card .card-actions button {
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 14px;
+            border-radius: 20px;
+            transition: background 0.2s;
+            color: var(--text-light);
+        }
+        .good-card .card-actions button:hover {
+            background: rgba(255, 255, 255, 0.30);
+        }
+        .good-card .card-actions .btn-like { color: var(--success); }
+        .good-card .card-actions .btn-like:hover { background: rgba(39, 174, 96, 0.10); }
+        .good-card .card-actions .btn-report { color: var(--danger); }
+        .good-card .card-actions .btn-report:hover { background: rgba(231, 76, 60, 0.10); }
+        .good-card .card-actions .liked { color: var(--success); font-weight: 700; }
+        .good-card .card-badge {
+            position: absolute;
+            top: 12px;
+            right: 14px;
+            font-size: 0.7rem;
+            padding: 3px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            backdrop-filter: blur(6px);
+        }
+        .good-card .badge-pending { background: rgba(254, 249, 231, 0.70); color: #7d6608; }
+        .good-card .badge-reviewed { background: rgba(234, 250, 241, 0.70); color: #1e8449; }
+        .good-card .badge-flagged { background: rgba(253, 237, 236, 0.70); color: #922b21; }
+        .good-card .reported-tag { font-size: 0.75rem; color: var(--danger); font-weight: 600; margin-left: 8px; }
+
+        .wall-empty {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-light);
+        }
+        .wall-empty .big-emoji { font-size: 4rem; display: block; margin-bottom: 16px; }
+
+        .footer {
+            text-align: center;
+            padding: 20px 0 8px;
+            color: rgba(0, 0, 0, 0.45);
+            font-size: 0.85rem;
+            z-index: 2;
+            position: relative;
+            margin-top: auto;
+            text-shadow: 0 1px 6px rgba(255, 255, 255, 0.5);
+        }
+
+        @media (max-width: 768px) {
+            .header h1 { font-size: 1.6rem; }
+            .header .stats { gap: 12px; }
+            .header .stats span { font-size: 0.8rem; padding: 4px 12px; }
+            .form-grid { grid-template-columns: 1fr; }
+            .tab-content { padding: 18px 14px 22px; }
+            .container { padding: 12px 10px 40px; }
+            .bg-wall { grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(5, 1fr); }
+        }
+        @media (max-width: 480px) {
+            .header h1 { font-size: 1.3rem; }
+            .radio-group { gap: 6px; }
+            .radio-group label { font-size: 0.8rem; padding: 4px 10px; }
+            .tabs button { font-size: 0.9rem; padding: 10px 6px; }
+            .good-card { padding: 14px 14px 12px; }
+            .wall-toolbar { flex-direction: column; align-items: stretch; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== 背景墙（纯CSS生成，完全自包含） ===== -->
+    <div class="bg-wall" id="bgWall"></div>
+    <div class="overlay"></div>
+
+    <div class="container">
+        <!-- 头部 -->
+        <header class="header glass">
+            <h1>🌱 让人心更温暖，让世界更美好</h1>
+            <p class="subtitle">记录每一份善意，传递每一份温暖</p>
+            <div class="stats">
+                <span>📋 累计 <strong id="totalCount">0</strong> 件好事</span>
+                <span>📅 今日 <strong id="todayCount">0</strong> 件</span>
+                <span>⭐ 精选 <strong id="featuredCount">0</strong> 件</span>
+            </div>
+        </header>
+
+        <!-- Tab 导航 -->
+        <div class="tabs">
+            <button class="active" data-tab="tab-submit">📝 记录好事</button>
+            <button data-tab="tab-wall">📋 好事墙</button>
+        </div>
+
+        <!-- Tab 内容 -->
+        <div class="tab-content">
+            <div class="tab-pane active" id="tab-submit">
+                <form id="goodForm" class="form-grid">
+                    <div class="form-group">
+                        <label for="goodDate">📅 做好事的时间</label>
+                        <input type="date" id="goodDate" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="goodGender">👤 您的性别</label>
+                        <select id="goodGender" required>
+                            <option value="">— 请选择 —</option>
+                            <option value="男">男</option>
+                            <option value="女">女</option>
+                            <option value="不愿透露">不愿透露</option>
+                        </select>
+                    </div>
+                    <div class="form-group full-width">
+                        <label>🎯 做好事的对象</label>
+                        <div class="radio-group" id="targetGroup">
+                            <label><input type="radio" name="target" value="一个人" checked /> 一个人</label>
+                            <label><input type="radio" name="target" value="一群人" /> 一群人</label>
+                            <label><input type="radio" name="target" value="一个组织单位" /> 一个组织单位</label>
+                            <label><input type="radio" name="target" value="整个社会" /> 整个社会</label>
+                        </div>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="goodLocation">📍 省份或城市</label>
+                        <input type="text" id="goodLocation" placeholder="例如：河北省邯郸市" required />
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="goodContent">✍️ 做了什么好事 <span class="hint">（请如实描述）</span></label>
+                        <textarea id="goodContent" rows="4" maxlength="500" placeholder="详细描述您做的好事，例如：帮邻居老人搬重物上楼……" required></textarea>
+                        <div class="char-count"><span id="charCount">0</span> / 500</div>
+                        <div class="privacy-tip">
+                            🔒 <strong>隐私提示：</strong>请勿提及您自己或对方的具体姓名和群体组织名称，以免泄露个人信息。
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-submit">💛 提交好事</button>
+                    <div class="form-message" id="formMessage"></div>
+                </form>
+            </div>
+
+            <div class="tab-pane" id="tab-wall">
+                <div class="wall-toolbar">
+                    <div class="filter-group">
+                        <select id="filterTarget">
+                            <option value="all">🎯 全部对象</option>
+                            <option value="一个人">一个人</option>
+                            <option value="一群人">一群人</option>
+                            <option value="一个组织单位">一个组织单位</option>
+                            <option value="整个社会">整个社会</option>
+                        </select>
+                        <select id="filterGender">
+                            <option value="all">👤 全部性别</option>
+                            <option value="男">男</option>
+                            <option value="女">女</option>
+                            <option value="不愿透露">不愿透露</option>
+                        </select>
+                    </div>
+                    <span class="empty-hint">共 <strong id="wallCount">0</strong> 条记录</span>
+                </div>
+                <div class="wall-list" id="wallList"></div>
+                <div class="wall-empty" id="wallEmpty" style="display:none;">
+                    <span class="big-emoji">🌷</span>
+                    <p>还没有好事记录，快来写下第一份善意吧！</p>
+                </div>
+            </div>
+        </div>
+
+        <footer class="footer">
+            🌱 让人心更温暖，让世界更美好 · 善意在此汇聚
+        </footer>
+    </div>
+
+    <script>
+        // ================================================================
+        //  数据管理
+        // ================================================================
+        const STORAGE_KEY = 'shanxinglu_records';
+
+        function loadRecords() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                return raw ? JSON.parse(raw) : [];
+            } catch { return []; }
+        }
+
+        function saveRecords(records) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+        }
+
+        function getNextId(records) {
+            return records.length > 0 ? Math.max(...records.map(r => r.id)) + 1 : 1;
+        }
+
+        // ================================================================
+        //  审核机制
+        // ================================================================
+        const BLOCK_KEYWORDS = [
+            '电话', '手机', '微信', 'QQ', '身份证', '地址',
+            '姓名', '名字', '我叫', '我是', '联系电话',
+            '加我', '私聊', '转账', '打款', '账号',
+            '组织名称', '公司名', '单位名称', '具体姓名'
+        ];
+
+        function autoFilter(content) {
+            const lower = content.toLowerCase();
+            for (const kw of BLOCK_KEYWORDS) {
+                if (lower.includes(kw)) {
+                    return { pass: false, reason: `包含敏感信息："${kw}"，请勿填写具体姓名或联系方式。` };
+                }
+            }
+            if (content.trim().length < 4) {
+                return { pass: false, reason: '内容太简短，请详细描述您做的好事。' };
+            }
+            return { pass: true, reason: '' };
+        }
+
+        // ================================================================
+        //  核心逻辑
+        // ================================================================
+        let records = loadRecords();
+        let currentFilter = { target: 'all', gender: 'all' };
+
+        const form = document.getElementById('goodForm');
+        const formMsg = document.getElementById('formMessage');
+        const wallList = document.getElementById('wallList');
+        const wallEmpty = document.getElementById('wallEmpty');
+        const wallCount = document.getElementById('wallCount');
+        const totalCount = document.getElementById('totalCount');
+        const todayCount = document.getElementById('todayCount');
+        const featuredCount = document.getElementById('featuredCount');
+        const filterTarget = document.getElementById('filterTarget');
+        const filterGender = document.getElementById('filterGender');
+        const charCount = document.getElementById('charCount');
+        const goodContent = document.getElementById('goodContent');
+
+        document.getElementById('goodDate').valueAsDate = new Date();
+
+        goodContent.addEventListener('input', function() {
+            charCount.textContent = this.value.length;
+        });
+
+        function getToday() {
+            const d = new Date();
+            return d.getFullYear() + '-' +
+                String(d.getMonth() + 1).padStart(2, '0') + '-' +
+                String(d.getDate()).padStart(2, '0');
+        }
+
+        function updateStats() {
+            const total = records.length;
+            const today = records.filter(r => r.date === getToday()).length;
+            const featured = records.filter(r => r.likes >= 5 || r.status === 'approved').length;
+            totalCount.textContent = total;
+            todayCount.textContent = today;
+            featuredCount.textContent = featured;
+        }
+
+        function getFilteredRecords() {
+            let list = [...records];
+            list = list.filter(r => r.status !== 'rejected');
+            list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            if (currentFilter.target !== 'all') {
+                list = list.filter(r => r.target === currentFilter.target);
+            }
+            if (currentFilter.gender !== 'all') {
+                list = list.filter(r => r.gender === currentFilter.gender);
+            }
+            return list;
+        }
+
+        function renderWall() {
+            const filtered = getFilteredRecords();
+            wallCount.textContent = filtered.length;
+            if (filtered.length === 0) {
+                wallList.innerHTML = '';
+                wallEmpty.style.display = 'block';
+                return;
+            }
+            wallEmpty.style.display = 'none';
+            let html = '';
+            for (const r of filtered) {
+                const badge = r.status === 'pending'
+                    ? '<span class="card-badge badge-pending">⏳ 待审核</span>'
+                    : (r.status === 'flagged'
+                        ? '<span class="card-badge badge-flagged">🚩 被举报</span>'
+                        : '<span class="card-badge badge-reviewed">✅ 已通过</span>');
+                const reportHint = r.reports > 0 ? `<span class="reported-tag">🚩 ${r.reports} 人举报</span>` : '';
+                const likedClass = r.likedByCurrent ? 'liked' : '';
+                html += `
+                    <div class="good-card" data-id="${r.id}">
+                        ${badge}
+                        <div class="card-meta">
+                            <span>📅 ${r.date}</span>
+                            <span>👤 ${r.gender}</span>
+                            <span>🎯 ${r.target}</span>
+                            <span>📍 ${r.location || '未知'}</span>
+                            <span>🕐 ${new Date(r.createdAt).toLocaleTimeString()}</span>
+                        </div>
+                        <div class="card-content">${escapeHtml(r.content)}</div>
+                        <div class="card-actions">
+                            <button class="btn-like ${likedClass}" data-id="${r.id}">
+                                👍 点赞 <span class="like-count">${r.likes}</span>
+                            </button>
+                            <button class="btn-report" data-id="${r.id}">
+                                🚩 举报
+                            </button>
+                            ${reportHint}
+                        </div>
+                    </div>
+                `;
+            }
+            wallList.innerHTML = html;
+            document.querySelectorAll('.btn-like').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = parseInt(this.dataset.id);
+                    handleLike(id);
+                });
+            });
+            document.querySelectorAll('.btn-report').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = parseInt(this.dataset.id);
+                    handleReport(id);
+                });
+            });
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function refreshAll() {
+            updateStats();
+            renderWall();
+        }
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const date = document.getElementById('goodDate').value;
+            const gender = document.getElementById('goodGender').value;
+            const target = document.querySelector('input[name="target"]:checked').value;
+            const location = document.getElementById('goodLocation').value.trim();
+            const content = document.getElementById('goodContent').value.trim();
+            if (!date || !gender || !location || !content) {
+                showFormMsg('请填写所有必填字段。', 'error');
+                return;
+            }
+            const filterResult = autoFilter(content);
+            if (!filterResult.pass) {
+                showFormMsg(filterResult.reason, 'error');
+                return;
+            }
+            const newRecord = {
+                id: getNextId(records),
+                date: date,
+                gender: gender,
+                target: target,
+                location: location,
+                content: content,
+                likes: 0,
+                reports: 0,
+                likedByCurrent: false,
+                status: 'pending',
+                createdAt: new Date().toISOString(),
+            };
+            records.push(newRecord);
+            saveRecords(records);
+            form.reset();
+            document.getElementById('goodDate').valueAsDate = new Date();
+            document.getElementById('goodContent').value = '';
+            charCount.textContent = '0';
+            showFormMsg('✅ 好事记录成功！感谢您的善举，正在等待审核。', 'success');
+            refreshAll();
+            switchTab('tab-wall');
+            setTimeout(() => { formMsg.style.display = 'none'; }, 4000);
+        });
+
+        function showFormMsg(text, type) {
+            formMsg.textContent = text;
+            formMsg.className = 'form-message ' + type;
+            formMsg.style.display = 'block';
+        }
+
+        function handleLike(id) {
+            const record = records.find(r => r.id === id);
+            if (!record) return;
+            if (record.likedByCurrent) {
+                record.likes = Math.max(0, record.likes - 1);
+                record.likedByCurrent = false;
+            } else {
+                record.likes += 1;
+                record.likedByCurrent = true;
+                if (record.likes >= 5 && record.status === 'pending') {
+                    record.status = 'approved';
+                }
+            }
+            saveRecords(records);
+            renderWall();
+            updateStats();
+        }
+
+        function handleReport(id) {
+            const record = records.find(r => r.id === id);
+            if (!record) return;
+            record.reports += 1;
+            if (record.reports >= 3 && record.status !== 'rejected') {
+                record.status = 'flagged';
+            }
+            saveRecords(records);
+            renderWall();
+            updateStats();
+            alert('🚩 已收到您的举报，平台会尽快核实处理。');
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tabs button').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tab === tabId);
+            });
+            document.querySelectorAll('.tab-pane').forEach(pane => {
+                pane.classList.toggle('active', pane.id === tabId);
+            });
+            if (tabId === 'tab-wall') {
+                renderWall();
+            }
+        }
+
+        document.querySelectorAll('.tabs button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                switchTab(this.dataset.tab);
+            });
+        });
+
+        filterTarget.addEventListener('change', function() {
+            currentFilter.target = this.value;
+            renderWall();
+        });
+        filterGender.addEventListener('change', function() {
+            currentFilter.gender = this.value;
+            renderWall();
+        });
+
+        // ================================================================
+        //  背景墙生成（纯CSS渐变色+爱心图标，100%可靠）
+        // ================================================================
+        function generateBackground() {
+            const wall = document.getElementById('bgWall');
+            // 20种温暖色调，模拟不同好事主题
+            const themes = [
+                { bg: 'linear-gradient(135deg, #FF6B6B, #ee5a24)', icon: '🌻' },
+                { bg: 'linear-gradient(135deg, #4ECDC4, #0abde3)', icon: '❤️' },
+                { bg: 'linear-gradient(135deg, #45B7D1, #0984e3)', icon: '🌿' },
+                { bg: 'linear-gradient(135deg, #96CEB4, #00b894)', icon: '🌟' },
+                { bg: 'linear-gradient(135deg, #FFEAA7, #fdcb6e)', icon: '🌸' },
+                { bg: 'linear-gradient(135deg, #DDA0DD, #a29bfe)', icon: '🌊' },
+                { bg: 'linear-gradient(135deg, #98D8C8, #00cec9)', icon: '☀️' },
+                { bg: 'linear-gradient(135deg, #F7DC6F, #e17055)', icon: '🌙' },
+                { bg: 'linear-gradient(135deg, #BB8FCE, #6c5ce7)', icon: '🍃' },
+                { bg: 'linear-gradient(135deg, #F1948A, #e84393)', icon: '🌹' },
+                { bg: 'linear-gradient(135deg, #82E0AA, #00b894)', icon: '💧' },
+                { bg: 'linear-gradient(135deg, #F8C471, #e17055)', icon: '🌱' },
+                { bg: 'linear-gradient(135deg, #AED6F1, #74b9ff)', icon: '🔥' },
+                { bg: 'linear-gradient(135deg, #D7BDE2, #a29bfe)', icon: '💜' },
+                { bg: 'linear-gradient(135deg, #A3E4D7, #00cec9)', icon: '⭐' },
+                { bg: 'linear-gradient(135deg, #FADBD8, #fab1a0)', icon: '🌼' },
+                { bg: 'linear-gradient(135deg, #D5F5E3, #55efc4)', icon: '🍎' },
+                { bg: 'linear-gradient(135deg, #FDEBD0, #ffeaa7)', icon: '🌴' },
+                { bg: 'linear-gradient(135deg, #E8DAEF, #dfe6e9)', icon: '🕊️' },
+                { bg: 'linear-gradient(135deg, #FCF3CF, #fdcb6e)', icon: '🍊' }
+            ];
+            for (let i = 0; i < 20; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.style.background = themes[i].bg;
+                cell.textContent = themes[i].icon;
+                wall.appendChild(cell);
+            }
+        }
+
+        generateBackground();
+        refreshAll();
+
+        // 添加示例数据
+        if (records.length === 0) {
+            const sample1 = {
+                id: 1,
+                date: getToday(),
+                gender: '女',
+                target: '一个人',
+                location: '北京市',
+                content: '今天在地铁上给一位抱孩子的妈妈让了座，她微笑着说谢谢，心里特别温暖。',
+                likes: 7,
+                reports: 0,
+                likedByCurrent: false,
+                status: 'approved',
+                createdAt: new Date(Date.now() - 3600000).toISOString(),
+            };
+            const sample2 = {
+                id: 2,
+                date: getToday(),
+                gender: '男',
+                target: '一群人',
+                location: '上海市',
+                content: '周末参加了社区环保志愿活动，和邻居们一起清理了小区花园的垃圾，环境变美了。',
+                likes: 3,
+                reports: 0,
+                likedByCurrent: false,
+                status: 'approved',
+                createdAt: new Date(Date.now() - 7200000).toISOString(),
+            };
+            records.push(sample1, sample2);
+            saveRecords(records);
+            refreshAll();
+        }
+    </script>
+</body>
+</html>
